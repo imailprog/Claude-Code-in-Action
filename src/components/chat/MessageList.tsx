@@ -5,6 +5,49 @@ import { cn } from "@/lib/utils";
 import { User, Bot, Loader2 } from "lucide-react";
 import { MarkdownRenderer } from "./MarkdownRenderer";
 
+interface ToolInvocation {
+  state: string;
+  result?: unknown;
+  toolName: string;
+  args?: {
+    command?: string;
+    path?: string;
+    new_path?: string;
+  };
+}
+
+function getToolLabel(tool: ToolInvocation): string {
+  const isDone = tool.state === "result" && tool.result;
+  const { command, path, new_path } = tool.args ?? {};
+
+  if (tool.toolName === "str_replace_editor") {
+    switch (command) {
+      case "create":
+        return isDone ? `Created ${path}` : `Creating ${path}`;
+      case "str_replace":
+      case "insert":
+        return isDone ? `Edited ${path}` : `Editing ${path}`;
+      case "view":
+        return isDone ? `Viewed ${path}` : `Viewing ${path}`;
+      case "undo_edit":
+        return isDone ? `Undid edit on ${path}` : `Undoing edit on ${path}`;
+    }
+  }
+
+  if (tool.toolName === "file_manager") {
+    switch (command) {
+      case "rename":
+        return isDone
+          ? `Renamed ${path} → ${new_path}`
+          : `Renaming ${path} → ${new_path}`;
+      case "delete":
+        return isDone ? `Deleted ${path}` : `Deleting ${path}`;
+    }
+  }
+
+  return tool.toolName;
+}
+
 interface MessageListProps {
   messages: Message[];
   isLoading?: boolean;
@@ -76,17 +119,18 @@ export function MessageList({ messages, isLoading }: MessageListProps) {
                             );
                           case "tool-invocation":
                             const tool = part.toolInvocation;
+                            const label = getToolLabel(tool);
                             return (
-                              <div key={partIndex} className="inline-flex items-center gap-2 mt-2 px-3 py-1.5 bg-neutral-50 rounded-lg text-xs font-mono border border-neutral-200">
+                              <div key={partIndex} className="inline-flex items-center gap-2 mt-2 px-3 py-1.5 bg-neutral-50 rounded-lg text-xs border border-neutral-200">
                                 {tool.state === "result" && tool.result ? (
                                   <>
                                     <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                                    <span className="text-neutral-700">{tool.toolName}</span>
+                                    <span className="text-neutral-700">{label}</span>
                                   </>
                                 ) : (
                                   <>
                                     <Loader2 className="w-3 h-3 animate-spin text-blue-600" />
-                                    <span className="text-neutral-700">{tool.toolName}</span>
+                                    <span className="text-neutral-700">{label}</span>
                                   </>
                                 )}
                               </div>
