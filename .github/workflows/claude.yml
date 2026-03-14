@@ -1,9 +1,4 @@
-name: Claude Code
-
-- name: Project Setup
-  run: |
-    npm run setup
-    npm run dev:daemon
+name: Project Setup
 
 on:
   issue_comment:
